@@ -9,7 +9,7 @@ def main():
 
     # Process the command line arguments
     host_name = sys.argv[1]
-    port_number = sys.argv[2]
+    port_number = int(sys.argv[2])
     file_name = sys.argv[3]
 
     # Save the name of the file to download
