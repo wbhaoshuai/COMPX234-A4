@@ -4,7 +4,7 @@ import socket
 def main():
     # Validate whether sufficient parameters are provided
     if len(sys.argv) != 2:
-        print("You should enter: Python udpclient.py host_name port_number file_name")
+        print("You should enter: Python UDPclient.py port_number")
         sys.exit(1)
     
     # Process the command line arguments
@@ -21,6 +21,13 @@ def main():
     server_socket.bind((host, port))
 
     print("Server is running and ready to accept multiple clients...")
+
+    while True:
+        # wait for a client DOWNLOAD request
+        data, client_address = server_socket.recvfrom(1024)
+        print(f"New client connected from {client_address}")
+        downloal_message = data.decode('ascii')
+
     
 
 if __name__ == "__main__":
