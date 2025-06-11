@@ -1,4 +1,5 @@
 import sys
+import socket
 
 # Validate whether sufficient parameters are provided
 if len(sys.argv) < 4:
@@ -24,3 +25,6 @@ try:
             line = file.readline()       
 except FileNotFoundError:
     print("File not found, please check the file path.")   
+
+# Create datagram socket
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
