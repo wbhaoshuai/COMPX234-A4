@@ -3,7 +3,7 @@ import socket
 
 def main():
     # Validate whether sufficient parameters are provided
-    if len(sys.argv) < 4:
+    if len(sys.argv) != 4:
         print("You should enter: Python udpclient.py host_name port_number file_name")
         sys.exit(1)
 
@@ -33,7 +33,8 @@ def main():
     for i in range(len(request_file)):
         # prepare DOWNLOAD message to request the first file on the list
         DOWNLOAD_reaquest = "DOWNLOAD " + request_file[i]
-        print(DOWNLOAD_reaquest)
+        # send a message
+        client_socket.sendall(DOWNLOAD_reaquest.encode('utf-8'))
 
 if __name__ == "__main__":
    main()
