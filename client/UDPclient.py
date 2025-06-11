@@ -36,5 +36,8 @@ def main():
         # send a message
         client_socket.sendall(DOWNLOAD_reaquest.encode('ascii'))
 
+        download_receive = client_socket.recv(1024).decode('ascii')
+        print(download_receive)
+
 if __name__ == "__main__":
    main()
