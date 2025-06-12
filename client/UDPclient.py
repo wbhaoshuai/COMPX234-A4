@@ -35,32 +35,36 @@ def main():
         download_receive = sendAndResponse(client_socket,host_name,port_number,DOWNLOAD_reaquest)
         print(f"Received: {download_receive}")
         # split the parts of the request
-        parts = download_receive.strip().split()
-        # # Check the value of the response
-        if(parts[0] == "ERR"):
-            print(download_receive)
-            continue
-        elif(parts[0] == "OK"):
-            file_size = parts[3]
-            print(file_size)
+        if(download_receive!=None):
+            parts = download_receive.strip().split()
+            # Check the value of the response
+            if(parts[0] == "ERR"):
+                print(download_receive)
+                continue
+            elif(parts[0] == "OK"):
+                file_size = parts[3]
+                print(file_size)
+        # print("next file")
 
-
+# sent_responses = set() 
         
 
 def sendAndResponse(c_socket, ip, port, packet):
-    c_socket.connect((ip, port))
     counter = 0
     # Timeout with the initial value
     current_timeout = 1000
     while(counter < 5):
         try:
-
             c_socket.settimeout(current_timeout/1000)
-            c_socket.sendall(packet.encode('ascii'))
+            c_socket.sendto(packet.encode('utf-8'), (ip, port))
 
-            response = c_socket.recv(1024)
-            return response.decode('ascii')
-            
+            data, _ = c_socket.recvfrom(1024)
+            response = data.decode('ascii')
+            # if response not in sent_responses:
+            #     sent_responses.add(response)
+            #     return response
+            return response
+                   
         except socket.timeout:
             counter += 1
             current_timeout *= 2
@@ -74,6 +78,7 @@ def sendAndResponse(c_socket, ip, port, packet):
         except Exception as e:
             print(f"Error: {e}")
             break
+
 
 
 if __name__ == "__main__":
