@@ -2,6 +2,8 @@ import sys
 import socket
 import os
 import random
+import threading
+import base64
 
 def main():
     # Validate whether sufficient parameters are provided
@@ -37,19 +39,49 @@ def main():
         parts = downloal_message.strip().split()
         # Validate the message
         if(len(parts) == 2 and parts[0] == "DOWNLOAD"):
+            file_name = parts[1]
             # Check if the filename exists
-            if os.path.exists(parts[1]):
+            if os.path.exists(file_name):
                # Get file size
-               file_size = os.path.getsize(parts[1])
+               file_size = os.path.getsize(file_name)
                # Get a port number randomly
                client_port = number_pool.pop()
-               response = "OK "+parts[1]+" SIZA "+str(file_size)+" PORT "+str(client_port)
+               response = "OK "+file_name+" SIZA "+str(file_size)+" PORT "+str(client_port)
                server_socket.sendto(response.encode('ascii'), client_address)
+               threading.Thread(target=handleFileTransmission, args=(host, client_port)).start()
             else:
-                response = "ERR " + parts[1] +" NOT_FOUND"
+                response = "ERR " + file_name +" NOT_FOUND"
                 server_socket.sendto(response.encode('ascii'), client_address)
         else:
             continue
+        
+def handleFileTransmission(host, client_port):
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    client_socket.bind((host, client_port))
+    while True:
+        data, client_address = client_socket.recvfrom(4096)
+        message = data.decode('ascii')
+        parts = message.strip().split()
+        print("request" + message)
+
+        if(parts[2] == "GET"):
+            file_name = parts[1]
+            start = int(parts[4])
+            end = int(parts[6])
+            try:
+                with open(file_name, 'rb') as file:
+                    # Read the contents of the corresponding section in the file
+                    file.seek(start)
+                    file_data = file.read(end - start + 1)
+                    
+                    base64_data = base64.b64encode(file_data).decode()
+                    response = f"FILE {file_name} OK START {start} END {end} DATA {base64_data}"
+                    client_socket.sendto(response.encode('ascii'), client_address)
+            except Exception as e:
+                print(f"文件传输错误: {e}")
+
+
 
 
 if __name__ == "__main__":
