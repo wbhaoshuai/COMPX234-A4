@@ -33,7 +33,19 @@ def main():
         # prepare DOWNLOAD message to request the first file on the list
         DOWNLOAD_reaquest = "DOWNLOAD " + request_file[i]
         download_receive = sendAndResponse(client_socket,host_name,port_number,DOWNLOAD_reaquest)
-        print(download_receive)
+        print(f"Received: {download_receive}")
+        # split the parts of the request
+        parts = download_receive.strip().split()
+        # # Check the value of the response
+        if(parts[0] == "ERR"):
+            print(download_receive)
+            continue
+        elif(parts[0] == "OK"):
+            file_size = parts[3]
+            print(file_size)
+
+
+        
 
 def sendAndResponse(c_socket, ip, port, packet):
     c_socket.connect((ip, port))
@@ -42,6 +54,7 @@ def sendAndResponse(c_socket, ip, port, packet):
     current_timeout = 1000
     while(counter < 5):
         try:
+
             c_socket.settimeout(current_timeout/1000)
             c_socket.sendall(packet.encode('ascii'))
 
@@ -50,7 +63,8 @@ def sendAndResponse(c_socket, ip, port, packet):
             
         except socket.timeout:
             counter += 1
-            current_timeout *= 2 
+            current_timeout *= 2
+            print(f"Error:The {counter}-th sending timeout. Retransmit the message.")
             
             # If the maximum number of retries is reached, exit the loop
             if counter >=5:
