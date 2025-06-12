@@ -30,10 +30,13 @@ def main():
     # Create a UDP socket object and link it to the server
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     for i in range(len(request_file)):
+        file_name = request_file[i]
         # prepare DOWNLOAD message to request the first file on the list
-        DOWNLOAD_reaquest = "DOWNLOAD " + request_file[i]
+        DOWNLOAD_reaquest = "DOWNLOAD " + file_name
         download_receive = sendAndResponse(client_socket,host_name,port_number,DOWNLOAD_reaquest)
         print(f"Received: {download_receive}")
+        file_size = 0
+        data_port = 0
         # split the parts of the request
         if(download_receive!=None):
             parts = download_receive.strip().split()
@@ -43,8 +46,29 @@ def main():
                 continue
             elif(parts[0] == "OK"):
                 file_size = parts[3]
-                print(file_size)
-        # print("next file")
+                # print(file_size)
+                data_port = parts[5]
+     
+        try:
+            # Open file for writing
+            with open(file_name, 'wb') as file:
+                total_received = 0
+                block_size = 1000  # 1000 bytes per block
+                
+                # Enter a cycle through which the file will be downloaded until it is completed
+                while total_received < int(file_size):
+                    start = total_received
+                    end = min(start + block_size - 1, int(file_size) - 1)
+                    
+                    # Build request
+                    request = f"FILE {file_name} GET START {start} END {end}"
+                    response = sendAndResponse(client_socket, host_name, int(data_port), request)
+                    print(response)
+                    total_received += len(end - start + 1)
+                           
+        except Exception as e:
+            print(f"Error: {e}")
+        
 
 # sent_responses = set() 
         
@@ -56,7 +80,7 @@ def sendAndResponse(c_socket, ip, port, packet):
     while(counter < 5):
         try:
             c_socket.settimeout(current_timeout/1000)
-            c_socket.sendto(packet.encode('utf-8'), (ip, port))
+            c_socket.sendto(packet.encode('ascii'), (ip, port))
 
             data, _ = c_socket.recvfrom(1024)
             response = data.decode('ascii')
