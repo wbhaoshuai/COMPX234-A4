@@ -72,6 +72,8 @@ def main():
 
                     # print(response)
                     total_received += end - start + 1
+                    progress = int((total_received / int(file_size)) * 50)
+                    print(f"\r[{progress*'*'}{(50-progress)*'.'}] {total_received}/{file_size} bytes", end="")
                 request = f"FILE {file_name} CLOSE"
                 response = sendAndResponse(client_socket, host_name, int(data_port), request)
                 if(response):
