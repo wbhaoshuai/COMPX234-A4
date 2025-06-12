@@ -1,5 +1,6 @@
 import sys
 import socket
+import base64
 
 def main():
     # Validate whether sufficient parameters are provided
@@ -63,6 +64,12 @@ def main():
                     # Build request
                     request = f"FILE {file_name} GET START {start} END {end}"
                     response = sendAndResponse(client_socket, host_name, int(data_port), request)
+                    if(response!=None):
+                        parts = response.strip().split()
+                        fileData = base64.b64decode(parts[8])
+                        file.seek(start)
+                        file.write(fileData)
+
                     # print(response)
                     total_received += end - start + 1
                 request = f"FILE {file_name} CLOSE"
