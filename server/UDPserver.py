@@ -63,7 +63,14 @@ def handleFileTransmission(host, client_port):
         data, client_address = client_socket.recvfrom(4096)
         message = data.decode('ascii')
         parts = message.strip().split()
-        print("request" + message)
+        # print("request" + message)
+
+        if(parts[2] =="CLOSE"):
+            file_name = parts[1]
+            response = f"FILE {file_name} CLOSE_OK"
+            client_socket.sendto(response.encode('ascii'), client_address)
+            client_socket.close()
+            break
 
         if(parts[2] == "GET"):
             file_name = parts[1]

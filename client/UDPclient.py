@@ -63,11 +63,16 @@ def main():
                     # Build request
                     request = f"FILE {file_name} GET START {start} END {end}"
                     response = sendAndResponse(client_socket, host_name, int(data_port), request)
-                    print(response)
-                    total_received += len(end - start + 1)
-                           
+                    # print(response)
+                    total_received += end - start + 1
+                request = f"FILE {file_name} CLOSE"
+                response = sendAndResponse(client_socket, host_name, int(data_port), request)
+                if(response):
+                    print("OK,close")            
         except Exception as e:
             print(f"Error: {e}")
+            break
+    client_socket.close()
         
 
 # sent_responses = set() 
@@ -82,7 +87,7 @@ def sendAndResponse(c_socket, ip, port, packet):
             c_socket.settimeout(current_timeout/1000)
             c_socket.sendto(packet.encode('ascii'), (ip, port))
 
-            data, _ = c_socket.recvfrom(1024)
+            data, _ = c_socket.recvfrom(4096)
             response = data.decode('ascii')
             # if response not in sent_responses:
             #     sent_responses.add(response)
