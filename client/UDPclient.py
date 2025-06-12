@@ -29,15 +29,38 @@ def main():
 
     # Create a UDP socket object and link it to the server
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    client_socket.connect((host_name, port_number))
     for i in range(len(request_file)):
         # prepare DOWNLOAD message to request the first file on the list
         DOWNLOAD_reaquest = "DOWNLOAD " + request_file[i]
-        # send a message
-        client_socket.sendall(DOWNLOAD_reaquest.encode('ascii'))
-
-        download_receive = client_socket.recv(1024).decode('ascii')
+        download_receive = sendAndResponse(client_socket,host_name,port_number,DOWNLOAD_reaquest)
         print(download_receive)
+
+def sendAndResponse(c_socket, ip, port, packet):
+    c_socket.connect((ip, port))
+    counter = 0
+    # Timeout with the initial value
+    current_timeout = 1000
+    while(counter < 5):
+        try:
+            c_socket.settimeout(current_timeout/1000)
+            c_socket.sendall(packet.encode('ascii'))
+
+            response = c_socket.recv(1024)
+            return response.decode('ascii')
+            
+        except socket.timeout:
+            counter += 1
+            current_timeout *= 2 
+            
+            # If the maximum number of retries is reached, exit the loop
+            if counter >=5:
+                print("the maximum number of retries has been reached, give up the attempt")
+                return None
+                
+        except Exception as e:
+            print(f"Error: {e}")
+            break
+
 
 if __name__ == "__main__":
    main()
