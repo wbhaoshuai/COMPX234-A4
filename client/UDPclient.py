@@ -1,6 +1,7 @@
 import sys
 import socket
 import base64
+import time
 
 def main():
     # Validate whether sufficient parameters are provided
@@ -47,7 +48,6 @@ def main():
                 continue
             elif(parts[0] == "OK"):
                 file_size = parts[3]
-                # print(file_size)
                 data_port = parts[5]
      
         try:
@@ -56,6 +56,8 @@ def main():
                 total_received = 0
                 block_size = 1000  # 1000 bytes per block
                 
+                # Wait for host to create thread
+                time.sleep(0.2)
                 # Enter a cycle through which the file will be downloaded until it is completed
                 while total_received < int(file_size):
                     start = total_received
@@ -70,21 +72,23 @@ def main():
                         file.seek(start)
                         file.write(fileData)
 
-                    # print(response)
                     total_received += end - start + 1
                     progress = int((total_received / int(file_size)) * 50)
                     print(f"\r[{progress*'*'}{(50-progress)*'.'}] {total_received}/{file_size} bytes", end="")
+                # when the file is completed, send a "closing request"
                 request = f"FILE {file_name} CLOSE"
                 response = sendAndResponse(client_socket, host_name, int(data_port), request)
+                # when the closing confirmation has been received, close the current file, print a message
                 if(response):
-                    print("OK,close")            
+                    print(" OK,close")            
         except Exception as e:
             print(f"Error: {e}")
             break
     client_socket.close()
         
 
-# sent_responses = set() 
+# Avoid receiving duplicate responses
+sent_responses = set() 
         
 
 def sendAndResponse(c_socket, ip, port, packet):
@@ -98,12 +102,13 @@ def sendAndResponse(c_socket, ip, port, packet):
 
             data, _ = c_socket.recvfrom(4096)
             response = data.decode('ascii')
-            # if response not in sent_responses:
-            #     sent_responses.add(response)
-            #     return response
-            return response
+            if response not in sent_responses:
+                sent_responses.add(response)
+                return response
+            return None
                    
         except socket.timeout:
+            # if a response does not arrive, there is a timeout, then print a message, double the timeout value, and attempt to receive again 
             counter += 1
             current_timeout *= 2
             print(f"Error:The {counter}-th sending timeout. Retransmit the message.")
@@ -116,7 +121,6 @@ def sendAndResponse(c_socket, ip, port, packet):
         except Exception as e:
             print(f"Error: {e}")
             break
-
 
 
 if __name__ == "__main__":

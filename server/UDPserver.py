@@ -33,7 +33,7 @@ def main():
     while True:
         # wait for a client DOWNLOAD request
         data, client_address = server_socket.recvfrom(1024)
-        print(f"New client connected from {client_address}")
+        print(f"New client request from {client_address}")
         downloal_message = data.decode('ascii')
         
         parts = downloal_message.strip().split()
@@ -48,35 +48,42 @@ def main():
                client_port = number_pool.pop()
                response = "OK "+file_name+" SIZA "+str(file_size)+" PORT "+str(client_port)
                server_socket.sendto(response.encode('ascii'), client_address)
-               threading.Thread(target=handleFileTransmission, args=(host, client_port)).start()
+               # create a new thread to handle the data requests that will come from this client
+               threading.Thread(target=handleFileTransmission, args=(host, client_port, file_size)).start()
             else:
                 response = "ERR " + file_name +" NOT_FOUND"
                 server_socket.sendto(response.encode('ascii'), client_address)
+                print(f"Failed resolved a file requestFile from {client_address} because {file_name} does not exist")
         else:
             continue
         
-def handleFileTransmission(host, client_port):
+def handleFileTransmission(host, client_port, file_size):
+    # create a new datagram socket and bind it to the new port
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     client_socket.bind((host, client_port))
     while True:
+        # Receive download request from client
         data, client_address = client_socket.recvfrom(4096)
         message = data.decode('ascii')
         parts = message.strip().split()
-        # print("request" + message)
-
+        
+        # check if the request is a "closing message"
         if(parts[2] =="CLOSE"):
             file_name = parts[1]
             response = f"FILE {file_name} CLOSE_OK"
             client_socket.sendto(response.encode('ascii'), client_address)
-            client_socket.close()
             break
 
         if(parts[2] == "GET"):
             file_name = parts[1]
             start = int(parts[4])
             end = int(parts[6])
+            # check the byte range requested
+            if start < 0 or end >= file_size or start > end:
+                continue
             try:
+                # open the file for reading
                 with open(file_name, 'rb') as file:
                     # Read the contents of the corresponding section in the file
                     file.seek(start)
@@ -86,8 +93,11 @@ def handleFileTransmission(host, client_port):
                     response = f"FILE {file_name} OK START {start} END {end} DATA {base64_data}"
                     client_socket.sendto(response.encode('ascii'), client_address)
             except Exception as e:
-                print(f"文件传输错误: {e}")
-
+                print(f"Error: {e}")
+                break
+    # After receiving the close message, jump out of the loop and close
+    client_socket.close()
+    print(f"Successfully resolved a file request from {client_address}")
 
 
 
