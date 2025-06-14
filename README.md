@@ -17,7 +17,7 @@ The server can simultaneously process file download requests from multiple clien
 1. Open the terminal and enter the directory where the code is located.
 2. Run the following command to start the server:
     python UDPserver.py <port_number>
-Where<port_number>is the port number that the server listens on.  
+- Where<port_number>is the port number that the server listens on.  
   
 For this project, for example, you can enter:  
     python UDPserver.py 54321
@@ -32,7 +32,7 @@ For this project, for example, you can enter:
 - <file_name>is a text file containing a list of file names to download.
   
 For this project, for example, you can enter:  
-    python UDPclient.py Bin 54321 request.txt 
+    python UDPclient.py localhost 54321 request.txt 
   
 ## Matters needing attention：
 - The server and client need to communicate in the same network or through appropriate network configuration.

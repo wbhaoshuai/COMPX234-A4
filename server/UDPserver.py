@@ -14,7 +14,7 @@ def main():
     # Process the command line arguments
     port_number = int(sys.argv[1])
 
-    host = 'Bin'
+    host = 'localhost'
     port = port_number
 
     # Create a socket object
